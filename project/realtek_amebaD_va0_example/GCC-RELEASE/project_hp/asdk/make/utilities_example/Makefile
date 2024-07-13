@@ -228,6 +228,10 @@ endif
 # CSRC += $(DIR)/azure/pnp/rtk_component/pnp_system.c
 # CSRC += $(DIR)/azure/pnp/rtk_component/pnp_video.c
 # CSRC += $(DIR)/azure/pnp/rtk_component/pnp_wireless.c
+
+# /* ACER */
+#IFLAGS += -I$(BASEDIR)/component/common/utilities  # flash_util.h
+
 #*****************************************************************************#
 #                               Object FILE LIST                              #
 #*****************************************************************************#
