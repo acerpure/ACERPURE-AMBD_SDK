@@ -231,6 +231,9 @@ endif
 
 # /* ACER */
 #IFLAGS += -I$(BASEDIR)/component/common/utilities  # flash_util.h
+IFLAGS += -I$(BASEDIR)/component/common/application/acer/inc/acerpure
+IFLAGS += -I$(BASEDIR)component/common/example/acerpure_uart_atcmd
+CSRC += $(DIR)/acerpure_uart_atcmd/example_acerpure_uart_atcmd.c
 
 #*****************************************************************************#
 #                               Object FILE LIST                              #

@@ -420,6 +420,35 @@
 #include <amazon_freertos/example_amazon_freertos.h>
 #endif
 
+/* ACER */
+#if (CONFIG_EXAMPLE_ACERPURE_UART_ATCMD)
+#include <acerpure_uart_atcmd/example_acerpure_uart_atcmd.h>
+#endif
+
+#if CONFIG_EXAMPLE_ACERPURE
+#include "aws_application_version.h"
+#include "aws_acerpure.h"
+#include "flash_util.h"
+#define DEFAULT_MODEL_NAME "acerpure"
+#define DEFAULT_MAIN_FW "v1.0.0.x"
+
+#define AWS_ALERT_FILTER_INSTALL_INTERVAL 1200
+#define AWS_ALERT_FILTER_HEALTH_INTERVAL 24*60*60 // one day
+#define AWS_ALERT_FILTER_HEALTH_INTERVAL_5 10*24*60*60 // 10 days
+#define AWS_ALERT_FILTER_HEALTH_INTERVAL_10 100*24*60*60 // 100 days
+#define AWS_ALERT_FILTER_HEALTH_INTERVAL_20 100*24*60*60 // 100 days
+#define AWS_ALERT_AQI_INTERVAL 3600
+#define AWS_ALERT_GAS_INTERVAL 3600
+#define AWS_ALERT_CO2_INTERVAL 3600
+
+struct user_wifi_conf g_wifi_conf;
+struct user_aws_mqtt_conf g_aws_mqtt_conf;
+struct user_aws_device_info g_aws_device_info;
+struct user_aws_alert_conf g_aws_alert_conf;
+int g_need_update_version = 0;
+extern AWS_OTA_STATE g_aws_ota;
+#endif
+
 /*
 	Preprocessor of example
 */
@@ -477,6 +506,64 @@ void pre_example_entry(void)
 
 #if defined(CONFIG_PLATFORM_8710C) && defined(CONFIG_FTL_ENABLED)
 	app_ftl_init();
+#endif
+
+/* ACER */
+#if CONFIG_EXAMPLE_ACERPURE
+	// user data init
+	// user_data_partition_ops(USER_PARTITION_WIFI, USER_PARTITION_READ,
+	// 						(u8 *)&g_wifi_conf, sizeof(struct user_wifi_conf));
+	// user_data_partition_ops(USER_PARTITION_AWS_MQTT, USER_PARTITION_READ,
+	// 						(u8 *)&g_aws_mqtt_conf, sizeof(struct user_aws_mqtt_conf));
+	// user_data_partition_ops(USER_PARTITION_AWS_DEVICE_INFO, USER_PARTITION_READ,
+	// 						(u8 *)&g_aws_device_info, sizeof(struct user_aws_device_info));
+
+	// current firmware version
+	char current_fw[12] = {0};
+	snprintf(current_fw, sizeof(current_fw), "v%d.%d.%d",
+				APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
+
+	if (g_aws_device_info.model_name[0] == 0xff)
+	{
+		memset(&g_aws_device_info, 0, sizeof(struct user_aws_device_info));
+		// fisrt boot, save default model name and main fw to the flash
+		strncpy(g_aws_device_info.model_name, DEFAULT_MODEL_NAME, sizeof(g_aws_device_info.model_name));
+		strncpy(g_aws_device_info.main_fw, DEFAULT_MAIN_FW, sizeof(g_aws_device_info.main_fw));
+		strncpy(g_aws_device_info.comm_fw, current_fw, sizeof(g_aws_device_info.comm_fw));
+
+		// user_data_partition_ops(USER_PARTITION_AWS_DEVICE_INFO, USER_PARTITION_WRITE,
+		// 					(u8 *)&g_aws_device_info, sizeof(struct user_aws_device_info));
+	}
+	else
+	{
+		if (strcmp(current_fw, g_aws_device_info.comm_fw))
+		{
+			g_need_update_version = 1;
+			// mark below for p2p ota
+			// FIXME: after mark below, OSD will stop to show "upgrading" after system reboot
+			// this cause that ota state mismatch between OSD and APP ota progress bar
+			//g_aws_ota = AWS_OTA_STATE_UPGRADING; // please note! keep AWS OTA state util updating version to AWS
+		}
+	}
+
+	// user_data_partition_ops(USER_PARTITION_AWS_ALERT, USER_PARTITION_READ,
+	// 						(u8 *)&g_aws_alert_conf, sizeof(struct user_aws_alert_conf));
+	if (g_aws_alert_conf.filter_install == 0xffffffff)
+	{
+		// use default interval value
+		g_aws_alert_conf.filter_health = AWS_ALERT_FILTER_HEALTH_INTERVAL;
+		g_aws_alert_conf.filter_health_5 = AWS_ALERT_FILTER_HEALTH_INTERVAL_5;
+		g_aws_alert_conf.filter_health_10 = AWS_ALERT_FILTER_HEALTH_INTERVAL_10;
+		g_aws_alert_conf.filter_health_20 = AWS_ALERT_FILTER_HEALTH_INTERVAL_20;
+		g_aws_alert_conf.filter_install = AWS_ALERT_FILTER_INSTALL_INTERVAL;
+		g_aws_alert_conf.aqi = AWS_ALERT_AQI_INTERVAL;
+		g_aws_alert_conf.gas = AWS_ALERT_GAS_INTERVAL;
+		g_aws_alert_conf.co2 = AWS_ALERT_CO2_INTERVAL;
+
+		// restore to flash
+		// user_data_partition_ops(USER_PARTITION_AWS_ALERT, USER_PARTITION_WRITE,
+		// 						(u8 *)&g_aws_alert_conf, sizeof(struct user_aws_alert_conf));
+    }
 #endif
 
 }
@@ -999,4 +1086,9 @@ example_hilink();
 	example_ric();
 #endif
 
+/* ACER */
+#if (CONFIG_EXAMPLE_ACERPURE_UART_ATCMD)
+        printf("Start ACERPURE AT Command service!\r\n");
+        example_acerpure_uart_atcmd();
+#endif
 }

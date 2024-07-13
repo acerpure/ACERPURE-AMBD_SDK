@@ -716,4 +716,26 @@ in lwip_opt.h for support uart adapter*/
 #define CONFIG_BRIDGE                   0
 #endif
 
+
+/* ACER */
+#define CONFIG_EXAMPLE_ACERPURE			1
+
+#if CONFIG_EXAMPLE_ACERPURE
+#define WIFI_SETTING_SECTOR				0x08100000
+#define AWS_MQTT_SETTING_SECTOR			0x08101000
+#define AWS_DEVICE_INFO_SECTOR			0x08102000
+#define AWS_ALERT_SETTING_SECTOR		0x08103000
+// #define AWS_ROOT_CA_SETTING_SECTOR		0x08104000
+#define AWS_KEY_SETTING_SECTOR 			0x08105000
+#define AWS_CLIENT_CA_SETTING_SECTOR 	0x08106000
+#endif
+
+#if CONFIG_EXAMPLE_ACERPURE
+/* For Amazon FreeRTOS SDK example */
+// #define CONFIG_EXAMPLE_AMAZON_FREERTOS 1
+
+/* For Acerpure UART AT command */
+#define CONFIG_EXAMPLE_ACERPURE_UART_ATCMD 1
+#endif
+
 #endif
