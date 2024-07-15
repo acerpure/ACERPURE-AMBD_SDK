@@ -23,6 +23,7 @@ IFLAGS += -I$(DIR)/inc/startup
 CSRC += $(DIR)/src/acerpure/aws_acerpure_daemon.c
 
 #acer - startup
+CSRC += $(DIR)/src/startup/acer_startup.c
 CSRC += $(DIR)/src/startup/acer_mdns.c
 
 
