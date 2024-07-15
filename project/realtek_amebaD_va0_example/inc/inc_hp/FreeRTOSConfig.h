@@ -113,6 +113,7 @@ extern uint32_t SystemCoreClock;
 #define configUSE_IDLE_HOOK								0
 #define configUSE_TICK_HOOK								0
 #define configUSE_MALLOC_FAILED_HOOK					1
+#define configUSE_DAEMON_TASK_STARTUP_HOOK      		1  // For acer_startup
 
 /* Constants provided for debugging and optimisation assistance. */
 #define configCHECK_FOR_STACK_OVERFLOW					2
@@ -237,4 +238,9 @@ extern int  freertos_ready_to_sleep(void);
 	
 #endif /* __IASMARM__ */
 #define configASSERT( x )         //do { if (!(x)) {printf("FreeRTOS Assert %s Line %d \n", __FILE__, __LINE__); while(1){}; }} while (0)
+
+/* For debug without amazon-freertos */
+#include <stdio.h>
+#define configPRINTF( x )    printf x
+
 #endif /* FREERTOS_CONFIG_H */
