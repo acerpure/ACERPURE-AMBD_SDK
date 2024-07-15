@@ -14,13 +14,12 @@
   - 因此會需要根據系統為 Windows(CRLF) 與非 Windows(LF) 去調整部分檔案
     - [project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/Makefile](project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/Makefile)
     - [project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/code_analyze.py](project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/code_analyze.py)
+- 在編譯前先，先初始化 Wifi 設定
+  - 修改 [component/common/application/acer/inc/startup/acer_init.h](component/common/application/acer/inc/startup/acer_init.h) 之內容並編譯即可
 - 其餘請參考編譯步驟可參考 [README-AMBD_SDK](README-AMBD_SDK)
 - 如果要在 MacOS 上測試，可以參考 [acerpure/matter](https://github.com/acerpure/matter) 的說明
 
 ## 測試
-
-- 初始化 Wifi 設定
-  - 修改 [component/common/application/acer/inc/startup/acer_init.h](component/common/application/acer/inc/startup/acer_init.h) 之內容並編譯即可
 
 - 使用 mdns 以方便測試
   - mdns 服務名稱: ameba.local
