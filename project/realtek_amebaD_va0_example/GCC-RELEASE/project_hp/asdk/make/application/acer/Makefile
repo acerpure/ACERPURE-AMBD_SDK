@@ -12,12 +12,18 @@ vpath %.c $(DIR) $(shell find $(DIR) -type d)
 #acer - acerpure
 IFLAGS += -I$(DIR)/inc/acerpure
 
+#acer - startup
+IFLAGS += -I$(DIR)/inc/startup
+
 #*****************************************************************************#
 #                               Source FILE LIST                              #
 #*****************************************************************************#
 
 #acer - acerpure
 CSRC += $(DIR)/src/acerpure/aws_acerpure_daemon.c
+
+#acer - startup
+CSRC += $(DIR)/src/startup/acer_mdns.c
 
 
 
