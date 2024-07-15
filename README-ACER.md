@@ -111,3 +111,10 @@
         }
       }
       ```
+
+## Build in container
+
+- 本專案需要搭配 vscode 與 Docker 等容器化技術才能使用，請參考 [vscode devcontainer](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-an-existing-folder-in-a-container) 以開啟本專案的開發環境
+- **因為建置過程中會使用 x86 指令集，所以如果是 Apple Mac silicon 之電腦的話，必須為 Docker-Desktop 或是 Orb-Stack 開啟 Rosetta 才能正常建置**
+- 該 container 已準備好編譯帶有 matter fw 的環境。此外，該 container image 尚未精簡，故需要 60GB 的存儲空間。
+
