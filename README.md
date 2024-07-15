@@ -1,197 +1,196 @@
+# ACERPURE-AMBD_SDK
 
-![Realtek-logo](https://logos-download.com/wp-content/uploads/2016/05/Realtek_logo_logotype.png)
+## Build in container
 
-For any questions, please visit [AmebaIoT officail website](https://www.amebaiot.com/en/) and AmebaIoT [forum](https://forum.amebaiot.com/) to get more information.
+- 本專案需要搭配 vscode 與 Docker 等容器化技術才能使用，請參考 [vscode devcontainer](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-an-existing-folder-in-a-container) 以開啟本專案的開發環境
+- **因為建置過程中會使用 x86 指令集，所以如果是 Apple Mac silicon 之電腦的話，必須為 Docker-Desktop 或是 Orb-Stack 開啟 Rosetta 才能正常建置**
+- 該 container 已準備好編譯帶有 matter fw 的環境。此外，該 container image 尚未精簡，故需要 60GB 的存儲空間。
 
-Table of Content
-=================
+## 編譯說明
 
-* [1 Getting Started](#1-getting-started)
-  * [Knowledge about AmebaD Demo Board](#knowledge-about-amebad-demo-board)
-* [2 Environment Setup](#2-environment-setup)
-  * [Windows](#windows)
-  * [Linux](#linux)
-  * [Connection to Log Console](#connection-to-log-console)
-* [3 Building the First Project on Ameba-D](#3-building-the-first-project-on-ameba-d)
-   * [Windows GCC](#windows-gcc)
-   * [Linux Terminal](#linux-terminal)
-* [4 Downloading Images to Ameba-D](#4-downloading-images-to-ameba-d)
-* [5 Release Notes](#5-release-notes)
-   * [Known Issues](#known-issues) 
+- 由於上游的原專案 [ambd_sdk](https://github.com/ambiot/ambd_sdk) 是在 Windows 和在 Cygwin 之間開發，因此執行 Make 編譯時可能會遇到 LF 與 CRLF 換行的問題
+  - 此外該專案也有很多檔案 LF 與 CRLF 混用，因此會有點麻煩
+  - 然後部分 Makefile 又有使用 `$(ABS_ROOTDIR)/code_analyze.py`，而 `code_analyze.py` 也會因為該問題造成無法執行
+  - 因此會需要根據系統為 Windows(CRLF) 與非 Windows(LF) 去調整部分檔案
+    - [project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/Makefile](project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/Makefile)
+    - [project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/code_analyze.py](project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/code_analyze.py)
+- 其餘請參考編譯步驟可參考 [README-AMBD_SDK](README-AMBD_SDK)
+- 如果要在 MacOS 上測試，可以參考 [acerpure/matter](https://github.com/acerpure/matter) 的說明
 
+## 測試
 
-# 1 Getting Started
+- 初始化 Wifi 設定
+  - 修改 [component/common/application/acer/inc/startup/acer_init.h](component/common/application/acer/inc/startup/acer_init.h) 之內容並編譯即可
 
-## Knowledge about AmebaD Demo Board
+- 使用 mdns 以方便測試
+  - mdns 服務名稱: ameba.local
+- 使用 httpd 以方便測試，以下為各個 route path
+  - <http://ameba.local/appversion>
+    - [GET] response sample
 
-> For Ameba-D, there are many types of chipsets available, such as RTL8720CS, RTL8721CSM, RTL8722CSM, RTL8720DN, RTL8720DM, RTL8721DM, and RTL8722DM. 
-> In addition, the chipsets can be embedded on Ameba-D DEV demo board, which is extended to various I/O interfaces. The corresponding HDK (Hardware Development Kit) documents are available, please contact RTK for further details. 
+      ```json
+      {
+        "type": "set-device",
+        "field": "commfw",
+        "value": "v1.1.0"
+      }
+      ```
 
-The hardware block diagram of Ameba-D demo board is shown below. 
+  - <http://ameba.local/mainfw>
+    - [GET] response sample
 
-   - USB TO UART: power supply and log print. 
-   - The baudrate is 115200bps 
-   - SWD: SWD interface, used to download images and debug with IAR. 
-   - Reset button: reset Ameba-D to run firmware after IAR completes download.
+      ```json
+      {
+        "type": "set-device",
+        "field": "mainfw",
+        "value": ""
+      }
+      ```
 
-   ![image2](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_3.png)
+  - <http://ameba.local/devicestate>
+    - [GET] response sample
 
+      ```json
+      {}
+      ```
 
-# 2 Environment Setup 
+  - <http://ameba.local/devicemonitor>
 
-## Windows
+    - [GET] response sample
 
-> Note: 
-   On Windows, you can use ``Cygwin`` as the GCC development environment. ``Cygwin`` is a large collection of GNU and open source tools which provide functionality similar to a Linux distribution on Windows.
+      ```json
+      {
+        "type": "save-monitor",
+        "data": {
+          "PM2.5": "0",
+          "PM1.0": "0",
+          "GAS": "0",
+          "CO2": "0"
+        }
+      }
+      ```
 
-> Click [http://cygwin.com](http://cygwin.com/) and download the ``Cygwin`` package [setup-x86.exe](http://cygwin.com/setup-x86_64.exe) for your Windows platform. 
+  - <http://ameba.local/action>
 
-1. 32-bit ``Cygwin`` is supported both for 32-bit Windows and 64-bit Windows.
-> Note: If you can not installed 32-bit Cygwin, refer to [Q: How can I install the last Cygwin version for an old, unsupported Windows?](https://cygwin.com/install.html). 
-Installation at CMD "setup-2.912.x86.exe --allow-unsupported-windows --site http://ctm.crouchingtigerhiddenfruitbat.org/pub/cygwin/circa/2022/11/23/063457"
-3. During the installation of ``Cygwin`` package, include `Devel -> make` and `Math -> bc` utilities on the Select Packages page, as below shows.
+    - [POST] request json data, 可以只送單一個值, 如只設定 `'.Acerpure-0.Power = "On"'`
 
-   ![getstart0](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_1.png)
+      ```json
+      {
+        "Acerpure-0":{
+          "FilterHealthAlertInterval": "11",
+          "FilterHealth5AlertInterval": "11",
+          "FilterHealth10AlertInterval": "11",
+          "FilterHealth20AlertInterval": "11",
+          "FilterInstallAlertInterval": "11",
+          "AQIAlertInterval": "11",
+          "GASAlertInterval": "11",
+          "CO2AlertInterval": "11",
+          "OTAUrl": "",
+          "OTAState": "Stop",
+          "MyFavorIcon": "Off",
+          "PkType": "",
+          "Power": "On",
+          "AirPurifierSpeed": "Smart",
+          "AirCirculatorSpeed": "1",
+          "AirPurifierRotate": "On",
+          "AirCirculatorRotate": "On",
+          "AirDetectMode": "PM2.5",
+          "KidMode": "On",
+          "SleepMode": "On",
+          "ShutdownTimer": "1",
+          "UV": "On"
+        }
+      }
+      ```
 
-   ![getstart1](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_2.png)
+## 修改說明
 
-## Linux
+- flash_util
+  - 根據 BW16 處理各個 SECTOR 的 flash 記憶體位置
+  - 使原本用 IAR EWARM 編譯之部分給改為用純 gcc 與 Makefile 做編譯
+    - 參考 project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/make/utilities/Makefile
+- acerpure_uart_atcmd
+  - 修掉 extern var 的問題，以傳遞變數
+  - 把跟 amazon-freertos 有關的部分給拆出去 (不相容)
+  - 使原本用 IAR EWARM 編譯之部分給改為用純 gcc 與 Makefile 做編譯
+    - 參考 project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/make/utilities_example/Makefile
 
-> Note:
-   For Linux, please refer to [AN0400 Realtek Ameba-D Application Note.pdf](https://www.amebaiot.com/en/sdk-download-manual-8722dm/) on AmebaIoT officail website to build the GCC development environment.  
+## 待移植
 
-## Connection to Log Console
+- 魔改版 wifi_simple_config
+  - component/common/api/wifi/wifi_simple_config.c
 
-> On AmebaD board, FTDI Chip and FT232 can be used for the log console and debugger. To view the log console, make use of the terminal tool, such as ``SecureCRT``/``TeraTerm``/``Putty`` and etc. We will take our internal tool as an example. 
+<!-- 
+### Get Ameba SDK & Matter SDK
 
-1) Select the corresponding serial uart configure communicate parameter and then open it. 
-2) Press the Reset button on Ameba-D board. Some messages can be found in the terminal.
+```sh
+# 因為整個 repo 實在太大惹，網路爛的話有可能會使部分內容 pull 不成功，並導致建置失敗，故把建議把 Log 打開來確認
+export GIT_TRACE_PACKET=1
+export GIT_TRACE=1
+export GIT_CURL_VERBOSE=1
 
-   ![image3](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_4.png)
+# 需要配對指定的 commit 才能動，別直接 pull master 或 tag，否則可能會建構失敗。可參考 release 頁面 https://github.com/ambiot/ambd_matter/releases
 
+# 僅 clone tag v1.3-release 的 ambd_matter
+git clone -b v1.3-release --single-branch https://github.com/ambiot/ambd_matter.git
 
-# 3 Building the First Project on Ameba-D
+# clone connectedhomeip 並切到前面 ambd_matter v1.3-release 所指定的 commit 70d9a61475d31686f0fde8e7b56f352a0f59b299
+git clone --single-branch https://github.com/project-chip/connectedhomeip.git && bash -c "cd connectedhomeip && git reset --hard 70d9a61475d31686f0fde8e7b56f352a0f59b299"
 
-## Windows GCC
+# **<一定要做這一步驟。因爲該 repo 架構複雜，所以需使用額外的程式去搞相依>** 然後，指定使用 connectedhomeip 專案魔改的 git submodule 之 ameba 所需要之部分
+# Checking out: nlassert, nlio, nlunit-test, mbedtls, qrcode, pigweed, openthread, nanopb, freertos, third_party/pybind11/repo, third_party/jsoncpp/repo, editline, third_party/boringssl/repo/src
+/workspaces/matter/connectedhomeip/scripts/checkout_submodules.py --allow-changing-global-git-config --shallow --platform ameba
+```
 
-The following steps are for first-time developer to build GCC project, under existing RTK SDK. 
+### Make project_lp
 
-> **Building Code** This section illustrates how to build SDK. 
-> First, you need to switch to GCC project directory. For Windows, open ``Cygwin`` terminal and use ``$ cd`` command to change directory to KM0 or KM4 project directory of Ameba-D SDK. 
+```sh
+cd /workspaces/matter/ambd_matter/project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp/
+/workspaces/matter/connectedhomeip/scripts/run_in_build_env.sh make all
+```
 
-> Note:
-   You need to replace the ``{path}`` to your own SDK location, and add ``cygdrive`` prefix in front of the SDK location, so that Cygwin can access your file system.
+### Make Matter Libraries and project_hp
+
+```sh
+. /workspaces/matter/connectedhomeip/scripts/activate.sh
+cd /workspaces/matter/ambd_matter/project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/
+make -C asdk all_clusters
+make all
+```
+
+## AmebaIOT Image Tools for MAC OSX
+
+由於非 Linux 發行版的 Docker 容器其實都是在特殊的虛擬主機中執行，而且[無法直通 usb 裝置](https://docs.docker.com/desktop/faqs/general/#can-i-pass-through-a-usb-device-to-a-container)，故得於容器外的主機(即本機)上操作。
+
+以下是在容器之外操作的（因為 docker 碰不到 usb 裝置），故請另外在本專案目錄開一個終端機去操作
 
 ```bash
-cd /cygdrive/{path}/project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp
-cd /cygdrive/{path}/project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp
+# 建立有著要被燒錄的 km0_boot_all.bin, km4_boot_all.bin, km0_km4_image2.bin 
+# 以及燒錄工具暫存檔之資料夾，並進入建立的 .upload 資料夾
+mkdir .upload |: && cd .upload
+
+# 燒錄工具初始化
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -set chip AmebaD
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -scan device
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -set baudrate 1500000
+
+# 在 make 完前面的 project_lp 與 project_hp 後，複製以下檔案到 .upload 資料夾
+cp ../ambd_matter/project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp/asdk/image/km0_boot_all.bin .
+cp ../ambd_matter/project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/image/{km4_boot_all.bin,km0_km4_image2.bin} .
+
+# 定址每個 .bin 之 offset，然後合併為一個 Image_All.bin
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -combine km0_boot_all.bin 0x0000 km4_boot_all.bin 0x4000 km0_km4_image2.bin 0x6000
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -set image Image_All.bin
+
+# 設置 Image 地址，然後確認
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -set address 0x08000000
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -show
+
+# 燒錄至板子中
+../ambd_matter/tools/AmebaD/Image_Tool_MacOS/MacOS_v11/Ameba_1-10_MP_ImageTool_MacOS11 -download
+
+# 看 serial console
+# 使用 `control` + `a` 進到操作模式後，再按 `k` 即可終止 console (下次燒錄前必須終止)
+screen /dev/tty.wchusbserial130 115200
 ```
-To build SDK for normal image, simply use ``$ make all`` command under the corresponding project directories on Cygwin (Windows). 
-
-KM0 project For KM0 project, if the terminal contains ``km0_image2_all.bin`` and ``Image manipulating end`` output message, it means that the image has been built successfully, as below shows.
-
-![image4](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_5.png)
-
-> If somehow it is built failed, type ``$ make clean`` to clean and then redo the make procedure. 
-
-> After successfully built, the image file is located in ``project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp/asdk/image`` , as below shows.
-
-![image5](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_6.png)
-
-KM4 project For KM4 project, if the terminal contains ``km0_image2_all.bin`` and ``Image manipulating end`` output message, it means that the image has been built successfully, as below shows.
-
-![image6](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_7.png)
-
-> If somehow it built failed, type ``$ make clean`` to clean and then redo the make procedure. 
-
-> After built successfully, the image file is located in ``project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/image``, as below shows.
-
-![image7](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_8.png)
-
-## Linux Terminal
-
-To build SDK for normal image on Linux, 
-
-1. Set directory to KM0 or KM4 project by entering the following commands in Linux Terminal 
-
-```bash
-cd /{path}/project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp
-cd /{path}/project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp
-```
-
-2. Under the corresponding directories, execute``$ make all`` to build images. You may start with ``project_lp`` first followed by ``project_hp``.
-   - **KM0 project (project_lp)**
-     - For KM0 project, if the terminal contains ``km0_image2_all.bin`` and ``Image manipulating end`` output message, it means that the image has been built successfully.
-     > If somehow it is built failed, type ``$ make clean`` to clean and then redo the make procedure. 
-     > After successfully built, the image file is located in ``project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp/asdk/image``.
-   
-   - **KM4 project (project_hp)**
-     - For KM4 project, if the terminal contains ``km0_image2_all.bin`` and ``Image manipulating end`` output message, it means that the image has been built successfully.
-     > If somehow it built failed, type ``$ make clean`` to clean and then redo the make procedure. 
-     > After built successfully, the image file is located in ``project/realtek_amebaD_va0_example/GCC-RELEASE/project_hp/asdk/image``, as below shows.
-     ![image7](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_8.png)
-
-> Note:
-> If you encountered any error message like: 
-  
-```bash
-make[1]: execvp: /{path}/ambd_sdk/project/realtek_amebaD_va0_example/GCC-RELEASE/project_lp/asdk/gnu_utility/prepend_header.sh: **Permission denied**
-Makefile:198: recipe for target 'linker_loader' failed
-```
- 
-> Please run the following command to grant the execution permission for the all corresponding files:
-
-```bash 
-chmod -R 777 {path}/project/realtek_amebaD_va0_example/GCC-RELEASE/
-``` 
-
-
-# 4 Downloading Images to Ameba-D
-
-Realtek provides an image tool to download images on windows.
-
-  * Environment Requirements: EX. WinXP, Win 7 Above, Microsoft .NET Framework 3.5
-  * ``ImageTool.exe``  Location: ``SDK\tools\AmebaD\Image_Tool\ImageTool.exe``
-
-   ![image8](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_9.png)]
-
-Assuming that the ImageTool on PC is a server, it sends images files to Ameba (client) through UART. To download image from server to client, the client must enter uart download first. 
-
-1) **Enter into UART_DOWNLOAD mode.**
-
-   * Push the UART DOWNLOAD button and keep it pressed.
-   * Re-power on the board or press the Reset button.
-   * Release the UART DOWNLOAD button.
-   
-   Now, Ameba board gets into UART_DOWNLOAD mode and is ready to receive data. 
-   
-2) **Click Chip Select(in red) on UI and select chip AmebaD.**
-
-3) **Select the corresponding serial port and transmission baud rate. The default baudrate is 1.5Mbps (recommended).**
-
-4) **Click the Browse button to select the images (km0_boot_all.bin/km4_boot_all.bin/km0_km4_image2.bin) to be programmed and input addresses.**
-
-   * The image path is located in: 
-     ``{path}\project\realtek_amebaD_va0_example\GCC-RELEASE\project_lp\asdk\image``
-     and
-     ``{path}\project\realtek_amebaD_va0_example\GCC-RELEASE\project_hp\asdk\image``,
-     where {path} is the location of the project on your own computer.
-   * The default target address is the SDK default image address, you can use it directly.
-
-5) **Click Download button to start. The progress bar will show the transmit progress of each image. You can also get the message of operation successfully or errors from the log window.**
-
-   ![image9](https://www.amebaiot.com/wp-content/uploads/2020/02/guide_d_10.png)
-
-# 5 Release Notes
-
-> Note: 
-> For Bluetooth Examples, currently we only support `BT_Peripheral` , `BT_Central` , `BT_Scatternet` , and `BT_Simple_Config` four examples.
-
-## Known Issues
-
-1. `mbed_flash_winbond_block_protect` example result expected to be different from `readme.txt`. This is caused by the brand of flash chip might be different on different versions of module or dev board.
-2. Execute "Tickps a" command,  then connect  the baord to AP. Executes "Tickps r debug" command then shut down the AP. Upin connection to AP is lost, the log of "DBG: Sleep blocked because Dev 1 busy" will keep appearing multiple times until it stop. The board will hang and could not enter any command to connect another AP.
-
-## Vesion Sync
-
-GitHub `ambd_sdk` is currently sync with 6.2 Git 220620_fb7aaf5a
+-->
