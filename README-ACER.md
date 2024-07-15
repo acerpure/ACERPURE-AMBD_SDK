@@ -81,7 +81,7 @@
 
   - <http://ameba.local/action>
 
-    - [POST] request json data
+    - [POST] request json data, 可以只送單一個值, 如只設定 `'.Acerpure-0.Power = "On"'`
 
       ```json
       {
