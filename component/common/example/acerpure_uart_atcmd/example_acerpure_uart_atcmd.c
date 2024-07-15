@@ -126,6 +126,9 @@ void acerpure_atcmd_send(u8 command, u8 *param, int param_length)
 
 	buf[ACERPURE_ATCMD_PARAM_OFFSET + param_length + 1] = ACERPURE_ATCMD_END;
 
+	/* TEST */
+	configPRINTF( ( "acerpure_atcmd_send, total len: %d\r\n", param_length + 6 ) );
+
 	acerpure_uart_at_send_buf(buf, param_length + 6); // 5: header, version, length, command, checksum, end
 }
 
@@ -150,29 +153,29 @@ int start_acerpure_atcmd_parser()
 
 	switch (acerpure_atcmd_content.command)
 	{
-		// case ACERPURE_ATCMD_QUERY_WIFI_STATE:
-		// {
-		// 	acerpure_wifi_state_t wifi_state;
-		// 	wifi_state.connection = (unsigned char)g_wifi_state;
-		// 	wifi_state.ota = (unsigned char)g_aws_ota;
-		// 	acerpure_atcmd_send(ACERPURE_ATCMD_REPORT_WIFI_STATE,
-		// 						(unsigned char *)&wifi_state, sizeof(wifi_state));
+		case ACERPURE_ATCMD_QUERY_WIFI_STATE:
+		{
+			acerpure_wifi_state_t wifi_state;
+			wifi_state.connection = (unsigned char)g_wifi_state;
+			wifi_state.ota = (unsigned char)g_aws_ota;
+			acerpure_atcmd_send(ACERPURE_ATCMD_REPORT_WIFI_STATE,
+								(unsigned char *)&wifi_state, sizeof(wifi_state));
 
-		// 	printf("#### AT COMMAND RECEIVED: Query wifi state: %d, ota state: %d\r\n",
-		// 			wifi_state.connection, wifi_state.ota);
-		// 	break;
-		// }
-		// case ACERPURE_ATCMD_SETUP_WIFI:
-		// {
-		// 	printf("#### AT COMMAND RECEIVED: Setup wifi!\r\n");
+			printf("#### AT COMMAND RECEIVED: Query wifi state: %d, ota state: %d\r\n",
+					wifi_state.connection, wifi_state.ota);
+			break;
+		}
+		case ACERPURE_ATCMD_SETUP_WIFI:
+		{
+			printf("#### AT COMMAND RECEIVED: Setup wifi!\r\n");
 
-		// 	if (AWS_DAEMON_STATE_PAIRING != g_aws_state)
-		// 	{
-		// 		g_start_wifi_pair = 1;
-		// 	}
+			if (AWS_DAEMON_STATE_PAIRING != g_aws_state)
+			{
+				g_start_wifi_pair = 1;
+			}
 
-		// 	break;
-		// }
+			break;
+		}
 		case ACERPURE_ATCMD_DEVICE_INFO:
 		{
 			printf("#### AT COMMAND RECEIVED: Device information!\r\n");
@@ -225,8 +228,7 @@ int start_acerpure_atcmd_parser()
 			}
 			printf("\r\n======== Device state end ========\r\n");
 
-// #if 0
-#if alert_test
+#if 0
 			// hardcoded filter install to test
 			if (alert_test)
 				acerpure_device_state.filter_install = 0;
@@ -345,8 +347,7 @@ int start_acerpure_atcmd_parser()
                 acerpure_device_monitor.co2_value = 0;
                 acerpure_device_monitor.co2_level = 0;  // 'N/A'
             }
-#if alert_test
-// #if 0
+#if 0
 			// hardcoded aqi to test
 			if (alert_test)
 			{
