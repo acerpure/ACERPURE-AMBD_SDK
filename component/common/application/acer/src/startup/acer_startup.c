@@ -158,6 +158,7 @@ static void prvDaemonTask( void * pvParameters )
 
                 // acerpure_mqtt_parser_exit = 0;
                 // acerpure_mqtt_task_exit = 0;
+                // if (Acerpure_RunDaemon() == 0)
                 if (acer_mdns() == 0 && Acerpure_RunDaemon() == 0)
                     g_aws_state = AWS_DAEMON_STATE_CONNECTED;
                 else
@@ -220,23 +221,14 @@ static void prvDaemonTask( void * pvParameters )
                     configPRINTF( ( "WIFI test failed\r\n" ) );
                 }
 
-                /* No opt, get ero */
-                // acerpure_atcmd_send(ACERPURE_ATCMD_REPORT_WIFI_STATE,
-                //                     (unsigned char *)&wifi_state, sizeof(wifi_state));
+                acerpure_atcmd_send(ACERPURE_ATCMD_REPORT_WIFI_STATE,
+                                    (unsigned char *)&wifi_state, sizeof(wifi_state));
 
                 g_aws_state = AWS_DAEMON_STATE_IDLE;
                 break;
             }
         }
     }
-
-    // if (0 == prvWifiConnect())
-    // {
-    //     g_aws_state = AWS_DAEMON_STATE_PAIRED;
-    //     acer_mdns();
-    // }
-    // if (Acerpure_RunDaemon() == 0)  g_aws_state = AWS_DAEMON_STATE_CONNECTED;
-    // else g_aws_state = AWS_DAEMON_STATE_IDLE;
 
     configPRINTF( ( "Acer daemon task exit\r\n" ) );
     vTaskDelete(NULL);
