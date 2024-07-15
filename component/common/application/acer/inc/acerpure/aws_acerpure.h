@@ -30,7 +30,6 @@ typedef enum {
 
 int Acerpure_RunDaemon( void );
 
-void acer_test_httpd(void);
-void acer_test_mdns(void);
+int acer_test_httpd(void);
 
 #endif /* _AWS_ACERPURE_H_ */
